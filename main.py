@@ -23,23 +23,23 @@ def progressbar(it, prefix="", size=60, file=sys.stdout):
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-content_filename = "content/wallpaper.jpg"
+content_filename = "content/dog.jpg"
 style_filename = "styles/autumn.jpg"
-result_filename = "results/wallpaper_autumn.jpg"
+result_filename = "results/dog_autumn.jpg"
 
 w = 224
 h = 224
 vgg19_mean = torch.tensor([0.485, 0.456, 0.406], device=device)
 vgg19_std = torch.tensor([0.229, 0.224, 0.225], device=device)
 preprocess = transforms.Compose([
-    transforms.Resize(256),
+    transforms.Resize(224),
     transforms.CenterCrop(w),
     transforms.ToTensor(),
     transforms.Normalize(mean=vgg19_mean, std=vgg19_std),
 ])
 
 preprocess_without_normalize = transforms.Compose([
-    transforms.Resize(256),
+    transforms.Resize(224),
     transforms.CenterCrop(w),
     transforms.ToTensor(),
 ])
@@ -92,7 +92,7 @@ def total_variation_loss(x):
     b = torch.square(x[:, :h-1, :w-1] - x[:, :h-1, 1:])
     return torch.sum(a + b)
 
-def compute_loss(base_image, style_features, content_features, content_weight=1, style_weight = 200000, total_variation_weight = 0.5):
+def compute_loss(base_image, style_features, content_features, content_weight=1, style_weight = 50000, total_variation_weight = 0.5):
     vgg19(base_image.unsqueeze(0))
     content_sum = torch.tensor(0.0, device=device)
     for i, content_feature in content_features.items():
@@ -138,5 +138,8 @@ for i in progressbar(range(iterations), "Iteration: ", 40):
 
     base_tensor.data.clamp_(0,1)
 
-plt.imshow(base_tensor.permute(1, 2, 0).cpu().detach().numpy())
-plt.savefig(result_filename)
+fig = plt.imshow(base_tensor.permute(1, 2, 0).cpu().detach().numpy())
+plt.axis('off')
+fig.axes.get_xaxis().set_visible(False)
+fig.axes.get_yaxis().set_visible(False)
+plt.savefig(result_filename, bbox_inches='tight', pad_inches = 0)
